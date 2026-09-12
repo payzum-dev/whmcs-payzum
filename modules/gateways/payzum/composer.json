@@ -1,0 +1,14 @@
+{
+    "name": "payzum/whmcs-gateway",
+    "description": "Payzum crypto payment gateway for WHMCS. Not published to Packagist — vendor/ ships with the module.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "payzum/payzum-php": "^0.1"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}
