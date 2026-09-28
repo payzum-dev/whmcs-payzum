@@ -43,7 +43,11 @@ chargeback fraud on VPS and domain orders is routine.
 
 ## Installation
 
-Copy the `modules/` tree of this repository into your WHMCS root:
+**From the release zip (recommended).** Download
+[`payzum-whmcs-1.0.0.zip`](https://github.com/payzum-dev/whmcs-payzum/releases/latest) and unzip it
+at your WHMCS root — the archive already mirrors the tree below.
+
+**From a clone.** Copy the `modules/` tree of this repository into your WHMCS root:
 
 ```
 modules/gateways/payzum.php              → <whmcs>/modules/gateways/payzum.php
