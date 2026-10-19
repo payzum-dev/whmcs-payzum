@@ -29,6 +29,12 @@ if ( ! defined( 'WHMCS' ) ) {
 
 require_once __DIR__ . '/payzum/vendor/autoload.php';
 
+// Payzum's fee per sale, deducted from the amount the merchant receives. Overridable in the
+// gateway config for merchants on a different agreement.
+if ( ! defined( 'PAYZUM_DEFAULT_FEE_PERCENT' ) ) {
+	define( 'PAYZUM_DEFAULT_FEE_PERCENT', 0.5 );
+}
+
 use Payzum\Errors\ApiException;
 use Payzum\Errors\PayzumException;
 use Payzum\PaymentStatus;
@@ -43,7 +49,7 @@ function payzum_MetaData() {
 	return array(
 		'DisplayName'                => 'Payzum (Crypto & Stablecoins)',
 		// Module release version (this gateway), not the WHMCS gateway API level below.
-		'Version'                    => '1.0.0',
+		'Version'                    => '1.1.0',
 		'APIVersion'                 => '1.1',
 		'gatewayType'                => 'Third Party Gateway',
 		'DisableLocalCreditCardInput' => true,
@@ -88,6 +94,13 @@ function payzum_config() {
 			),
 			'Default'      => 'production',
 			'Description'  => 'Staging is an isolated environment with its own API keys — a production key will not work there.',
+		),
+		'feePercent'    => array(
+			'FriendlyName' => 'Payzum fee (%)',
+			'Type'         => 'text',
+			'Size'         => '6',
+			'Default'      => '0.5',
+			'Description'  => 'Payzum deducts this from each payment it settles to your wallet (0.5% per sale). It is recorded as the transaction fee so WHMCS matches what actually arrived. Change it only if your Payzum agreement uses a different rate.',
 		),
 	);
 }
@@ -418,6 +431,37 @@ function payzum_settlement_mismatch( $stored, array $data ) {
 	}
 
 	return null;
+}
+
+/**
+ * Payzum's fee on a settled amount, as WHMCS should record it on the payment.
+ *
+ * Payzum deducts its fee from what reaches the merchant's wallet, so crediting the invoice with a
+ * fee of 0 left WHMCS's books above the wallet by the fee on every payment. The invoice is still
+ * paid in full; the fee becomes the gateway fee on that transaction. The IPN carries no fee field,
+ * so it is computed from the configured rate on the settled price_amount.
+ *
+ * A missing setting (an install upgraded from 1.0.0 that never saved the new field) uses the
+ * default. An unreadable one also falls back to the default rather than to zero, and is logged:
+ * understating the fee is exactly the drift this exists to remove.
+ *
+ * @param float $amount settled amount, in the invoice currency
+ * @param array $params gateway variables
+ * @return float fee, rounded to cents
+ */
+function payzum_fee( $amount, array $params ) {
+	$rate = PAYZUM_DEFAULT_FEE_PERCENT;
+	$raw  = isset( $params['feePercent'] ) ? trim( str_replace( array( '%', ',' ), array( '', '.' ), (string) $params['feePercent'] ) ) : '';
+
+	if ( '' !== $raw ) {
+		if ( is_numeric( $raw ) && (float) $raw >= 0 && (float) $raw <= 100 ) {
+			$rate = (float) $raw;
+		} else {
+			payzum_log_call( 'ipn.fee', array( 'feePercent' => $params['feePercent'] ), array( 'note' => 'unreadable fee rate — recorded the default ' . PAYZUM_DEFAULT_FEE_PERCENT . '% instead' ) );
+		}
+	}
+
+	return round( (float) $amount * $rate / 100, 2 );
 }
 
 /** Module-call log entry, when the platform provides the logger (it does not in the harness). */

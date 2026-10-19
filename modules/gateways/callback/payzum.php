@@ -138,6 +138,9 @@ if ( $mapped->isPaid() ) {
 	}
 
 	$amount = (float) $data['price_amount'];
+	// Payzum deducts its fee from what reaches the wallet; recording it keeps WHMCS equal to the
+	// wallet while the invoice is still paid in full.
+	$fee = payzum_fee( $amount, $gatewayParams );
 
 	checkCbTransID( $transId ); // rejects duplicates — delivery retries reuse the payment id
 
@@ -145,11 +148,11 @@ if ( $mapped->isPaid() ) {
 		$invoiceId,
 		$transId,
 		$amount,
-		0, // fee — settled to the merchant wallet, not deducted here
+		$fee,
 		$gatewayModuleName
 	);
 
-	logTransaction( $gatewayModuleName, $data, 'Successful' );
+	logTransaction( $gatewayModuleName, array_merge( $data, array( 'recorded_fee' => $fee ) ), 'Successful' );
 } else {
 	logTransaction( $gatewayModuleName, $data, 'Status: ' . $mapped->value );
 }

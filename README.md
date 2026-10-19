@@ -39,12 +39,15 @@ chargeback fraud on VPS and domain orders is routine.
   (credit applied, invoice edited) mints a fresh one.
 - **Amount verification before crediting** — a mismatched or unreadable amount
   is logged, never credited.
+- **Payzum's fee recorded on every payment** — Payzum deducts 0.5% per sale from
+  what reaches your wallet; the module records it as the transaction fee, so
+  WHMCS matches your wallet while the invoice is paid in full.
 - **Production / staging selector** built into the gateway settings.
 
 ## Installation
 
 **From the release zip (recommended).** Download
-[`payzum-whmcs-1.0.0.zip`](https://github.com/payzum-dev/whmcs-payzum/releases/latest) and unzip it
+[`payzum-whmcs-1.1.0.zip`](https://github.com/payzum-dev/whmcs-payzum/releases/latest) and unzip it
 at your WHMCS root — the archive already mirrors the tree below.
 
 **From a clone.** Copy the `modules/` tree of this repository into your WHMCS root:
@@ -58,6 +61,9 @@ modules/gateways/callback/payzum.php     → <whmcs>/modules/gateways/callback/p
 Then activate **Payzum (Crypto & Stablecoins)** under
 **Configuration → System Settings → Payment Gateways**.
 
+**Upgrading from 1.0.0.** Overwrite the same three paths. The new **Payzum fee (%)**
+setting defaults to `0.5`, so there is nothing else to do.
+
 ## Configuration
 
 | Setting | Meaning |
@@ -65,6 +71,7 @@ Then activate **Payzum (Crypto & Stablecoins)** under
 | API Key | 64-hex key from your [Payzum merchant dashboard](https://merchant.payzum.com) (Dashboard → Developers → API keys) |
 | Webhook secret | IPN signing secret from your Payzum webhook settings — verifies the HMAC-SHA-512 signature |
 | Environment | Production (`merchant.payzum.com`) or staging (`staging.payzum.com`; staging needs its own API key) |
+| Payzum fee (%) | Payzum's fee per sale, deducted from each payment received (default `0.5`). Recorded as the transaction fee on the payment so WHMCS matches your wallet. Change it only if your Payzum agreement uses a different rate |
 
 The IPN callback URL is
 `https://<your-whmcs>/modules/gateways/callback/payzum.php`. The signature
@@ -104,6 +111,11 @@ which is server-to-server and retried on failure.
 The module reuses the open Payzum invoice for a WHMCS invoice across page
 refreshes, shows an "awaiting confirmation" notice once the payment is
 received, and WHMCS's transaction-id guard rejects duplicate credits.
+
+**How much does Payzum charge?**
+0.5% per sale, deducted from the amount received — a 100 USDC payment settles
+as 99.50 USDC in your wallet. The module records that fee on the WHMCS
+transaction, so your books match the wallet.
 
 **Does it need composer on the server?**
 No. The official Payzum PHP SDK is vendored inside the module.
