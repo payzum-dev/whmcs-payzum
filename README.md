@@ -6,7 +6,7 @@ Accept **cryptocurrency and stablecoin payments** (USDC, USDT and more, multi-ch
 custody. **Zero chargebacks** — a major win for hosting billing, where
 chargeback fraud on VPS and domain orders is routine.
 
-- **Module:** `payzum` (Third Party Gateway) · **Version:** 1.0.0 · **License:** MIT
+- **Module:** `payzum` (Third Party Gateway) · **Version:** 1.1.0 · **License:** MIT
 - **Requires:** WHMCS (gateway API 1.1), PHP ≥ 8.1 with `ext-curl`
 - The official [`payzum/payzum-php`](https://packagist.org/packages/payzum/payzum-php)
   SDK is vendored — no composer step on the server.
